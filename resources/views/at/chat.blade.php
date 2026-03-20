@@ -91,8 +91,8 @@
                            class="w-full bg-[#1a1a1a] border border-white/10 rounded-2xl p-4 pr-14 text-sm text-white focus:outline-none focus:border-[#4CAF50]/50 transition-all shadow-inner placeholder:text-gray-600">
                     
                     <button type="submit" 
-                            :disabled="loading || !newMessage.trim()" 
-                            class="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-[#4CAF50] text-white rounded-xl active:scale-95 disabled:bg-gray-800 disabled:text-gray-500 transition-all shadow-lg">
+                             :disabled="loading || !newMessage.trim()" 
+                             class="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-[#4CAF50] text-white rounded-xl active:scale-95 disabled:bg-gray-800 disabled:text-gray-500 transition-all shadow-lg">
                         <template x-if="!loading">
                             <i data-lucide="send" class="w-5 h-5"></i>
                         </template>
@@ -142,6 +142,7 @@
                 this.newMessage = '';
                 this.loading = true;
                 
+                // Affichage immédiat du message utilisateur
                 this.appendMessage('user', text);
                 this.scrollToBottom();
 
@@ -151,11 +152,21 @@
                         conversation_id: this.conversationId
                     });
                     
+                    // On affiche le contenu renvoyé par le AtService (IA ou Erreur PHP)
                     this.appendMessage('assistant', res.data.content);
-                    if (!this.conversationId) this.conversationId = res.data.conversation_id;
+                    
+                    if (!this.conversationId && res.data.conversation_id) {
+                        this.conversationId = res.data.conversation_id;
+                        
+                        // Update URL to include the new conversation ID without reloading
+                        const newPath = "{{ route('at.chat') }}/" + this.conversationId;
+                        window.history.pushState({path: newPath}, '', newPath);
+                    }
                     
                 } catch (e) {
-                    this.appendMessage('assistant', "Désolé, une erreur est survenue.");
+                    // Capture de l'erreur réseau ou serveur
+                    const errorMsg = e.response?.data?.message || e.message || "Erreur de connexion.";
+                    this.appendMessage('assistant', "Désolé, une erreur serveur est survenue : " + errorMsg);
                 } finally {
                     this.loading = false;
                     this.scrollToBottom();
@@ -166,13 +177,17 @@
             appendMessage(role, content) {
                 const wrapper = document.getElementById('messages-wrapper');
                 const isUser = role === 'user';
-                const html = `
-                    <div class="flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in">
-                        <div class="max-w-[85%] lg:max-w-2xl px-5 py-3 rounded-2xl ${isUser ? 'bg-[#4CAF50] text-white rounded-tr-none' : 'bg-[#1a1a1a] text-gray-300 border border-white/5 rounded-tl-none'} shadow-lg">
-                            <p class="text-sm leading-relaxed whitespace-pre-line">${this.escapeHTML(content)}</p>
-                        </div>
+                
+                // On crée l'élément proprement pour éviter les problèmes d'injection
+                const div = document.createElement('div');
+                div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`;
+                
+                div.innerHTML = `
+                    <div class="max-w-[85%] lg:max-w-2xl px-5 py-3 rounded-2xl ${isUser ? 'bg-[#4CAF50] text-white rounded-tr-none' : 'bg-[#1a1a1a] text-gray-300 border border-white/5 rounded-tl-none'} shadow-lg">
+                        <p class="text-sm leading-relaxed whitespace-pre-line">${this.escapeHTML(content)}</p>
                     </div>`;
-                wrapper.insertAdjacentHTML('beforeend', html);
+                
+                wrapper.appendChild(div);
             },
 
             escapeHTML(str) {

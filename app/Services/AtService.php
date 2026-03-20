@@ -10,28 +10,25 @@ class AtService
 {
     public function chat(Conversation $conversation, string $userPrompt)
     {
-        // 1. Enregistrer le message de l'utilisateur
-        $conversation->messages()->create([
-            'role' => 'user',
-            'content' => $userPrompt
-        ]);
-
-        // 2. Récupérer l'historique
-        $history = $conversation->messages()->oldest()->get()->map(function ($msg) {
-            return ['role' => $msg->role, 'content' => $msg->content];
-        })->toArray();
-
-        $aiContent = "Désolé, AT rencontre une difficulté technique.";
-
         try {
-            // 3. UTILISATION DE TA VARIABLE : AT_GROQ_KEY
-            $apiKey = env('AT_GROQ_KEY');
+            // 1. Enregistrer le message de l'utilisateur
+            $conversation->messages()->create([
+                'role' => 'user',
+                'content' => $userPrompt
+            ]);
 
-            if (!$apiKey) {
-                throw new \Exception("La clé AT_GROQ_KEY est introuvable sur Render.");
+            // 2. Récupérer l'historique
+            $history = $conversation->messages()->oldest()->get()->map(function ($msg) {
+                return ['role' => $msg->role, 'content' => $msg->content];
+            })->toArray();
+
+            // 3. Vérification de la clé (Diagnostic direct)
+            $apiKey = env('AT_GROQ_KEY') ?: env('GROQ_API_KEY');
+            if (empty($apiKey)) {
+                return "ERREUR CONFIG : Clé API manquante. Ajoutez AT_GROQ_KEY dans le fichier .env et lancez 'php artisan config:clear'.";
             }
 
-            // 4. Appel à Groq
+            // 4. Appel à Groq avec gestion de timeout plus longue
             $response = Http::withoutVerifying() 
                 ->withToken($apiKey)
                 ->timeout(60)
@@ -43,17 +40,19 @@ class AtService
                 ]);
         
             if ($response->failed()) {
-                $aiContent = "Erreur Groq (" . $response->status() . ") : " . ($response->json('error.message') ?? "Erreur inconnue");
+                $errorMsg = $response->json('error.message') ?? $response->body();
+                $aiContent = "ERREUR API (" . $response->status() . ") : " . $errorMsg;
             } else {
-                $aiContent = $response->json('choices.0.message.content') ?? "Réponse vide.";
+                $aiContent = $response->json('choices.0.message.content') ?? "Réponse vide de Groq.";
             }
         
         } catch (\Exception $e) {
-            Log::error("Erreur AtService : " . $e->getMessage());
-            $aiContent = "Erreur technique : " . $e->getMessage();
+            // On renvoie l'erreur PHP réelle pour qu'elle s'affiche dans la bulle de chat
+            Log::error("AtService Exception : " . $e->getMessage());
+            $aiContent = "ERREUR TECHNIQUE : " . $e->getMessage();
         }
 
-        // 5. Enregistrer la réponse de AT
+        // 5. Enregistrer le résultat (même si c'est une erreur, pour debug)
         $conversation->messages()->create([
             'role' => 'assistant',
             'content' => $aiContent
