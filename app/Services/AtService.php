@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Conversation;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class AtService
 {
@@ -20,10 +21,21 @@ class AtService
             return ['role' => $msg->role, 'content' => $msg->content];
         })->toArray();
 
+        // Initialisation par défaut pour éviter le crash
+        $aiContent = "Désolé, AT rencontre une difficulté technique.";
+
         try {
-            // 3. Appel à Groq (sans le commentaire qui brise tout)
+            // 3. Appel à Groq
+            // Note : Il est préférable d'utiliser config('services.groq.key') 
+            // Mais pour Render, assure-toi que GROQ_API_KEY est bien dans "Environment"
+            $apiKey = env('AT_GROQ_KEY');
+
+            if (!$apiKey) {
+                throw new \Exception("La clé API GROQ est manquante sur le serveur.");
+            }
+
             $response = Http::withoutVerifying() 
-                ->withToken(env('GROQ_API_KEY'))
+                ->withToken($apiKey)
                 ->timeout(30)
                 ->post('https://api.groq.com/openai/v1/chat/completions', [
                     'model' => 'llama-3.3-70b-versatile',
@@ -33,12 +45,14 @@ class AtService
                 ]);
         
             if ($response->failed()) {
-                $aiContent = "Erreur Groq : " . ($response->json('error.message') ?? $response->body());
+                $aiContent = "Erreur Groq : " . ($response->json('error.message') ?? "Erreur HTTP " . $response->status());
             } else {
-                $aiContent = $response->json('choices.0.message.content') ?? "Format JSON inconnu.";
+                $aiContent = $response->json('choices.0.message.content') ?? "Réponse vide du moteur.";
             }
         
         } catch (\Exception $e) {
+            // On log l'erreur pour la voir dans les logs Render
+            Log::error("Erreur AtService : " . $e->getMessage());
             $aiContent = "Erreur technique : " . $e->getMessage();
         }
 
