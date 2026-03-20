@@ -21,7 +21,7 @@ class ChatController extends Controller
         $activeConversation = $id ? Conversation::with('messages')->find($id) : null;
     
         // IMPORTANT : On retire le "at." car le fichier est chat.blade.php
-        return view('chat', compact('conversations', 'activeConversation'));
+        return view('at.chat', compact('conversations', 'activeConversation'));
     }
 
     public function destroy(Conversation $conversation)
