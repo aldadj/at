@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ChatController;
 
+// Redirection automatique de l'accueil vers /at
+Route::redirect('/', '/at');
+
 // Une seule route pour l'index (l'accueil et l'ID optionnel)
 Route::get('/at/{id?}', [ChatController::class, 'index'])->name('at.chat');
 
