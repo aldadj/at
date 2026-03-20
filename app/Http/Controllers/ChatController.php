@@ -17,13 +17,10 @@ class ChatController extends Controller
 
     public function index($id = null)
     {
-        // On récupère les conversations pour la sidebar
         $conversations = Conversation::latest()->get();
-        
-        // On charge la conversation active avec ses messages
         $activeConversation = $id ? Conversation::with('messages')->find($id) : null;
-
-        // Correction du chemin de la vue : 'chat' au lieu de 'at.chat'
+    
+        // IMPORTANT : On retire le "at." car le fichier est chat.blade.php
         return view('chat', compact('conversations', 'activeConversation'));
     }
 
