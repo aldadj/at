@@ -18,18 +18,19 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY . .
 
-# Droits sur les dossiers Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
 # Installation des dépendances PHP et JS
 RUN composer install --no-dev --optimize-autoloader
 RUN npm install && npm run build
 
-# Configuration du dossier public pour Apache
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+# --- LA SOLUTION POUR LE PLAN GRATUIT ---
+# On crée le fichier SQLite et on donne les droits
+RUN mkdir -p database && touch database/database.sqlite
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+
 # Configuration du dossier public pour Apache
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/000-default.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
-EXPOSE 80
+# On lance les migrations au démarrage
+CMD php artisan migrate --force && apache2-foreground
