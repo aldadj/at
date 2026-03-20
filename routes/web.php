@@ -3,9 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ChatController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [ChatController::class, 'index'])->name('at.chat');
 
 Route::get('/at/{id?}', [ChatController::class, 'index'])->name('at.chat');
 Route::post('/at/send', [ChatController::class, 'store'])->name('at.send');
