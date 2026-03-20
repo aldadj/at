@@ -21,22 +21,20 @@ class AtService
             return ['role' => $msg->role, 'content' => $msg->content];
         })->toArray();
 
-        // Initialisation par défaut pour éviter le crash
         $aiContent = "Désolé, AT rencontre une difficulté technique.";
 
         try {
-            // 3. Appel à Groq
-            // Note : Il est préférable d'utiliser config('services.groq.key') 
-            // Mais pour Render, assure-toi que GROQ_API_KEY est bien dans "Environment"
+            // 3. UTILISATION DE TA VARIABLE : AT_GROQ_KEY
             $apiKey = env('AT_GROQ_KEY');
 
             if (!$apiKey) {
-                throw new \Exception("La clé API GROQ est manquante sur le serveur.");
+                throw new \Exception("La clé AT_GROQ_KEY est introuvable sur Render.");
             }
 
+            // 4. Appel à Groq
             $response = Http::withoutVerifying() 
                 ->withToken($apiKey)
-                ->timeout(30)
+                ->timeout(60)
                 ->post('https://api.groq.com/openai/v1/chat/completions', [
                     'model' => 'llama-3.3-70b-versatile',
                     'messages' => array_merge([
@@ -45,18 +43,17 @@ class AtService
                 ]);
         
             if ($response->failed()) {
-                $aiContent = "Erreur Groq : " . ($response->json('error.message') ?? "Erreur HTTP " . $response->status());
+                $aiContent = "Erreur Groq (" . $response->status() . ") : " . ($response->json('error.message') ?? "Erreur inconnue");
             } else {
-                $aiContent = $response->json('choices.0.message.content') ?? "Réponse vide du moteur.";
+                $aiContent = $response->json('choices.0.message.content') ?? "Réponse vide.";
             }
         
         } catch (\Exception $e) {
-            // On log l'erreur pour la voir dans les logs Render
             Log::error("Erreur AtService : " . $e->getMessage());
             $aiContent = "Erreur technique : " . $e->getMessage();
         }
 
-        // 4. Enregistrer la réponse de AT
+        // 5. Enregistrer la réponse de AT
         $conversation->messages()->create([
             'role' => 'assistant',
             'content' => $aiContent
