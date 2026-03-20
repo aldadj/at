@@ -1,8 +1,8 @@
 services:
   - type: web
     name: at-engine
-    env: php # L'environnement correct pour Laravel sur Render
-    plan: starter # Le plan gratuit s'appelle souvent 'starter' ou 'free' dans l'API
+    runtime: php
+    plan: free # On force le plan gratuit ici
     region: oregon
     buildCommand: composer install --no-dev --optimize-autoloader && npm install && npm run build
     startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
@@ -13,5 +13,5 @@ services:
         value: false
       - key: LOG_CHANNEL
         value: stderr
-      - key: APP_KEY
-        value: base64:VOTRE_CLE_ICI # Remplace par ta clé ou ajoute-la dans le dashboard
+      - key: SESSION_DRIVER
+        value: cookie
