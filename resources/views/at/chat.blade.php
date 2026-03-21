@@ -67,7 +67,7 @@
                     <i data-lucide="panel-left" class="w-5 h-5"></i>
                 </button>
                 <h1 class="text-sm font-bold text-gray-800 dark:text-gray-100 tracking-tight">
-                    AT Engine <span class="text-purple-600 ml-1">v1.0</span>
+                    AT Engine <span class="text-purple-600 ml-1"></span>
                 </h1>
             </div>
             
