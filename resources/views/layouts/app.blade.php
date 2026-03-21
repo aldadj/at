@@ -16,7 +16,7 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-[#121212] antialiased">
+<body class="antialiased bg-white dark:bg-[#212121] transition-colors duration-300">
     @yield('content')
 
     <script>
