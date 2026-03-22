@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-
+<link rel="stylesheet" href="{{ asset('css/chat.css') }}">
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="{{ asset('js/chat.js') }}?v={{ time() }}"></script>
@@ -28,7 +28,8 @@
          x-transition:enter-end="opacity-100"
          x-transition:leave="transition ease-in duration-200"
          @click="sidebarOpen = false" 
-         class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"></div>
+         class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden">
+    </div>
 
     <aside :class="{
             'translate-x-0': sidebarOpen, 
@@ -74,22 +75,7 @@
 
     <div class="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#212121] transition-colors duration-300 relative">
         
-        <header class="h-14 border-b border-gray-100 dark:border-white/5 flex items-center justify-between px-4 bg-white/80 dark:bg-[#212121]/80 backdrop-blur-md sticky top-0 z-30">
-            <div class="flex items-center gap-3">
-                <button @click="toggleSidebarMenu()" class="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors">
-                    <i data-lucide="panel-left" class="w-5 h-5"></i>
-                </button>
-                <h1 class="text-sm font-bold text-gray-800 dark:text-gray-100 tracking-tight">
-                    AT Engine <span class="text-purple-600 ml-1"></span>
-                </h1>
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-gradient-to-tr from-purple-600 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-purple-500/20">
-                    U
-                </div>
-            </div>
-        </header>
+     @include('partials._header')
 
         <main id="chat-container" class="flex-1 overflow-y-auto custom-scrollbar pt-4">
             <div id="messages-wrapper" class="max-w-3xl mx-auto px-4 pb-44 space-y-8">
@@ -112,55 +98,8 @@
             </div>
             <div id="scroll-anchor" class="h-2"></div>
         </main>
-
-        <footer class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white dark:from-[#212121] via-white dark:via-[#212121] to-transparent z-20">
-            <div class="max-w-3xl mx-auto">
-                <form @submit.prevent="sendMessage" class="relative">
-                    <div class="relative flex items-end bg-[#f4f4f4] dark:bg-[#2f2f2f] rounded-[24px] border border-transparent focus-within:border-gray-300 dark:focus-within:border-white/20 transition-all p-1.5 shadow-sm">
-                        <textarea 
-                            x-ref="chatInput"
-                            x-model="newMessage" 
-                            @keydown.enter.prevent="if(!loading && newMessage.trim()) sendMessage()"
-                            @input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"
-                            rows="1"
-                            placeholder="Écrivez votre message..." 
-                            class="w-full bg-transparent border-none focus:ring-0 py-3 px-4 text-[15px] text-gray-900 dark:text-gray-100 resize-none max-h-40"
-                            :disabled="loading"></textarea>
-                        
-                        <button type="submit" 
-                                :disabled="loading || !newMessage.trim()" 
-                                class="w-10 h-10 shrink-0 mb-0.5 mr-0.5 rounded-full flex items-center justify-center transition-all"
-                                :class="newMessage.trim() && !loading ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-gray-300 dark:bg-white/5 text-gray-400 cursor-not-allowed'">
-                            
-                            <div x-show="!loading"><i data-lucide="arrow-up" class="w-5 h-5"></i></div>
-                            <div x-show="loading" class="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                        </button>
-                    </div>
-                </form>
-                <p class="text-[10px] text-gray-400 dark:text-gray-500 text-center mt-3 font-medium">
-                    ALDADJ TECH — Intelligence Artificielle au Burkina
-                </p>
-            </div>
-        </footer>
+        @include('partials._footer')
     </div>
 </div>
 
-
-<style>
-    /* Scrollbar invisible ou fine selon le thème */
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; }
-
-    @keyframes fade-in { 
-        from { opacity: 0; transform: translateY(10px); } 
-        to { opacity: 1; transform: translateY(0); } 
-    }
-    .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
-
-    /* Nettoyage des focus sur mobile */
-    textarea:focus { box-shadow: none !important; outline: none !important; }
-    button { -webkit-tap-highlight-color: transparent; }
-</style>
 @endsection
