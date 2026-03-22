@@ -20,7 +20,6 @@ class ChatController extends Controller
         $conversations = Conversation::latest()->get();
         $activeConversation = $id ? Conversation::with('messages')->find($id) : null;
     
-        // IMPORTANT : On retire le "at." car le fichier est chat.blade.php
         return view('at.chat', compact('conversations', 'activeConversation'));
     }
 
